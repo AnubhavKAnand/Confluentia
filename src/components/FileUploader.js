@@ -1,3 +1,4 @@
+// src/components/FileUploader.js
 import React from "react";
 import * as pdfjsLib from "pdfjs-dist";
 import mammoth from "mammoth";
@@ -30,7 +31,6 @@ export default function FileUploader({ onTextExtracted }) {
       } else if (name.endsWith(".xlsx") || name.endsWith(".xls") || file.type.includes("spreadsheet")) {
         const arrayBuffer = await file.arrayBuffer();
         const workbook = XLSX.read(arrayBuffer, { type: "array" });
-        // Combine all sheets into a CSV-like text
         let merged = "";
         workbook.SheetNames.forEach((sheetName) => {
           const ws = workbook.Sheets[sheetName];
@@ -43,12 +43,12 @@ export default function FileUploader({ onTextExtracted }) {
         const text = await file.text();
         onTextExtracted(text, file.name);
       } else {
-        // fallback: try to read text
+        // fallback read as text
         try {
           const text = await file.text();
           onTextExtracted(text, file.name);
         } catch (err) {
-          alert("Unsupported file type. Supported: PDF, DOCX, XLSX, CSV");
+          alert("Unsupported file type. Supported: PDF, DOCX, XLSX, CSV, TXT");
         }
       }
     } catch (err) {
@@ -58,10 +58,12 @@ export default function FileUploader({ onTextExtracted }) {
   };
 
   return (
-    <div>
-      <label style={{ display: "inline-block", marginRight: 8 }}>
-        <input type="file" accept=".pdf,.docx,.xlsx,.xls,.csv" onChange={handleFile} />
+    <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+      <label style={{ cursor: "pointer", padding: "6px 10px", background: "#eef2f7", borderRadius: 8 }}>
+        <input type="file" accept=".pdf,.docx,.xlsx,.xls,.csv,.txt" onChange={handleFile} style={{ display: "none" }} />
+        Choose file
       </label>
+      <div style={{ fontSize: 13, color: "#374151" }}>Upload a SOP (PDF / DOCX / XLSX / CSV)</div>
     </div>
   );
 }
