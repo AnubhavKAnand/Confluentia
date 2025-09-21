@@ -1,64 +1,45 @@
-// src/components/BpmnViewer.js
-import React, { useEffect, useRef } from "react";
-import Modeler from "bpmn-js/lib/Modeler"; // we need the Modeler to saveXML
-// Note: do not import CSS from bpmn-js here; your app stylesheet is fine.
+import React, { useRef, useEffect, useCallback } from 'react';
+import BpmnViewer from 'bpmn-js/lib/NavigatedViewer';
 
-export default function BpmnViewer({ xml, onReady }) {
+const BPMNViewer = ({ xml }) => {
   const containerRef = useRef(null);
-  const modelerRef = useRef(null);
+  const viewerRef = useRef(null);
+
+  const displayDiagram = useCallback(async () => {
+    if (containerRef.current && xml) {
+      if (viewerRef.current) {
+        viewerRef.current.destroy();
+      }
+      
+      const viewer = new BpmnViewer({ container: containerRef.current });
+      viewerRef.current = viewer;
+
+      try {
+        await viewer.importXML(xml);
+        const canvas = viewer.get('canvas');
+        canvas.zoom('fit-viewport');
+      } catch (err) {
+        console.error('Error rendering BPMN:', err);
+      }
+    }
+  }, [xml]);
 
   useEffect(() => {
-    // Create modeler once
-    if (!modelerRef.current) {
-      modelerRef.current = new Modeler({
-        container: containerRef.current,
-        height: "100%",
-        width: "100%",
-      });
-    }
+    displayDiagram();
     return () => {
-      // cleanup
-      try {
-        modelerRef.current && modelerRef.current.destroy();
-        modelerRef.current = null;
-      } catch (e) {
-        // ignore
+      if (viewerRef.current) {
+        viewerRef.current.destroy();
       }
     };
-  }, []);
+  }, [displayDiagram]);
 
-  useEffect(() => {
-    // import xml whenever prop changes
-    if (!xml || !modelerRef.current) return;
-
-    modelerRef.current.importXML(xml, function (err) {
-      if (err) {
-        console.error("BPMN import error", err);
-        // forward a usable error object to parent via onReady
-        onReady && onReady({ success: false, error: err, modeler: modelerRef.current });
-        return;
-      }
-
-      try {
-        const canvas = modelerRef.current.get("canvas");
-        canvas.zoom("fit-viewport");
-      } catch (e) {}
-
-      onReady && onReady({ success: true, error: null, modeler: modelerRef.current });
-    });
-  }, [xml, onReady]);
-
-  // Basic UI container
   return (
-    <div
-      ref={containerRef}
-      style={{
-        width: "100%",
-        height: "420px", // adjust to your layout
-        borderRadius: 8,
-        border: "1px solid #e6eef2",
-        background: "#fff",
-      }}
-    />
+    <div 
+        ref={containerRef} 
+        className="w-full h-96 border rounded-lg bg-gray-50"
+        style={{ minHeight: '400px' }}
+    ></div>
   );
-}
+};
+
+export default BPMNViewer;

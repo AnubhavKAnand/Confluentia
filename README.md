@@ -1,32 +1,78 @@
-# SOP → BPMN Viewer (React + Serverless OpenAI)
+Automated Process Map Generator
+This is a React-based web application that allows users to upload Standard Operating Procedure (SOP) documents (in PDF, DOCX, or XLSX format) and automatically generates Business Process Model and Notation (BPMN) diagrams. The application also identifies and extracts associated risks and controls from the document.
 
-## Overview
-Upload documents (PDF, DOCX, XLSX/CSV), extract text client-side, send to OpenAI to produce BPMN XML, render in-browser using `bpmn-js`, and download XML or JSON export of the model.
+The core intelligence is powered by the Google Gemini API, which analyzes the document's text and returns a structured JSON object containing the process maps and related data.
 
-## Quickstart (local)
-1. `npm install`
-2. Create a `.env` file or set environment variable `OPENAI_API_KEY` for the serverless function when deploying.
-   - Locally, you can run a server that proxies or run using Vercel.
-3. `npm start` (for CRA dev)
-4. Open `http://localhost:3000`.
+Features
+File Upload: Supports PDF, Microsoft Word (.docx), and Microsoft Excel (.xlsx) files.
 
-**Note:** The example `api/openai.js` is a Vercel-compatible serverless function. For local dev, you'll need a local server or use Vercel preview to test the function. Alternatively you can create a tiny express proxy to forward requests to OpenAI with your API key (not recommended for production).
+Text Extraction: Client-side text extraction from various document formats.
 
-## Deploy (Vercel recommended)
-1. Push repo to GitHub.
-2. On Vercel, import the repo and deploy.
-3. In the Vercel project settings, set an Environment Variable:
-   - `OPENAI_API_KEY` = your OpenAI API key
-4. Deploy — Vercel will pick up the `api/openai.js` serverless function automatically.
+AI-Powered Analysis: Leverages the Gemini API to understand document content and generate process models.
 
-## Deploy to GitHub Pages
-GitHub Pages cannot host serverless endpoints. To use GitHub Pages:
-- Host the frontend on GitHub Pages.
-- Deploy the `api/openai.js` function somewhere else (Vercel / Netlify Functions / AWS Lambda) and update the frontend to call that function's URL. Keep the key secret in that provider.
+BPMN Visualization: Renders interactive BPMN 2.0 diagrams directly in the browser.
 
-## Security
-**Do not** commit your OpenAI API key. Always use environment variables in your hosting platform.
+Risk & Control Identification: Displays tables of risks and controls associated with each process.
 
-## Notes & troubleshooting
-- If OpenAI returns plain text instead of strict XML, the frontend tries to extract the XML inside code blocks.
-- If the generated BPMN is invalid, you can edit the XML in the right-side editor and press the "Generate" button again (it will re-render).
+JSON Export: Allows users to download the complete structured data as a JSON file.
+
+Project Structure
+/
+├── public/
+│   ├── index.html
+│   └── ... (other public assets)
+├── src/
+│   ├── components/
+│   │   ├── BPMNViewer.js
+│   │   ├── FileUpload.js
+│   │   ├── Icons.js
+│   │   ├── Loader.js
+│   │   └── ProcessDetail.js
+│   ├── services/
+│   │   └── geminiService.js
+│   ├── utils/
+│   │   └── fileExtractor.js
+│   ├── App.js
+│   ├── index.css
+│   └── index.js
+├── .gitignore
+├── package.json
+├── README.md
+└── tailwind.config.js
+
+Getting Started
+Prerequisites
+Node.js (v14 or later)
+
+npm or yarn
+
+Installation
+Clone the repository:
+
+git clone <repository-url>
+cd process-map-generator
+
+Install dependencies:
+
+npm install
+
+or
+
+yarn install
+
+Running the Application
+To start the development server, run:
+
+npm start
+
+The application will be available at http://localhost:3000.
+
+Building for Production
+To create a production-ready build, run:
+
+npm run build
+
+This will create a build directory with the optimized and minified assets, ready for deployment.
+
+Deployment
+This application is configured for easy deployment on static hosting platforms like Vercel, Netlify, or GitHub Pages. Simply connect your repository to your hosting provider of choice and follow their instructions for deploying a Create React App project.
