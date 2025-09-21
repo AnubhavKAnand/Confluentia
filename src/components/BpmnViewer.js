@@ -1,47 +1,64 @@
+// src/components/BpmnViewer.js
 import React, { useEffect, useRef } from "react";
-import BpmnViewer from "bpmn-js";
-import BpmnModdle from "bpmn-moddle";
+import Modeler from "bpmn-js/lib/Modeler"; // we need the Modeler to saveXML
+// Note: do not import CSS from bpmn-js here; your app stylesheet is fine.
 
-export default function BpmnViewerComponent({ xml, onReady }) {
+export default function BpmnViewer({ xml, onReady }) {
   const containerRef = useRef(null);
-  const viewerRef = useRef(null);
+  const modelerRef = useRef(null);
 
   useEffect(() => {
-    // init viewer once
-    if (!viewerRef.current) {
-      viewerRef.current = new BpmnViewer({
+    // Create modeler once
+    if (!modelerRef.current) {
+      modelerRef.current = new Modeler({
         container: containerRef.current,
         height: "100%",
         width: "100%",
       });
     }
     return () => {
-      // cleaning up on unmount
+      // cleanup
       try {
-        viewerRef.current && viewerRef.current.destroy();
-      } catch (e) {}
+        modelerRef.current && modelerRef.current.destroy();
+        modelerRef.current = null;
+      } catch (e) {
+        // ignore
+      }
     };
   }, []);
 
   useEffect(() => {
-    if (!xml) return;
-    const v = viewerRef.current;
-    v.importXML(xml, (err) => {
+    // import xml whenever prop changes
+    if (!xml || !modelerRef.current) return;
+
+    modelerRef.current.importXML(xml, function (err) {
       if (err) {
-        console.error("bpmn import error", err);
-        onReady && onReady({ success: false, error: err });
-      } else {
-        try {
-          v.get("canvas").zoom("fit-viewport");
-        } catch {}
-        onReady && onReady({ success: true, viewer: v });
+        console.error("BPMN import error", err);
+        // forward a usable error object to parent via onReady
+        onReady && onReady({ success: false, error: err, modeler: modelerRef.current });
+        return;
       }
+
+      try {
+        const canvas = modelerRef.current.get("canvas");
+        canvas.zoom("fit-viewport");
+      } catch (e) {}
+
+      onReady && onReady({ success: true, error: null, modeler: modelerRef.current });
     });
   }, [xml, onReady]);
 
-  // helpers exposed via onReady callback (viewer)
-  // but parent can call viewer.saveXML via the viewer instance returned in onReady
-
-  // Provide UI wrapper
-  return <div className="viewer" ref={containerRef} />;
+  // Basic UI container
+  return (
+    <div
+      ref={containerRef}
+      style={{
+        width: "100%",
+        height: "420px", // adjust to your layout
+        borderRadius: 8,
+        border: "1px solid #e6eef2",
+        background: "#fff",
+      }}
+    />
+  );
 }
