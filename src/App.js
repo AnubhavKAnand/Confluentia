@@ -38,11 +38,25 @@ Important: output only the BPMN XML (no commentary).`;
     }
     setStatus("Sending to OpenAI...");
     try {
-      const prompt = buildPrompt(sopText);
+        const buildPrompt = (text) => {
+            return `You are an expert BPMN process modeller and will output a valid BPMN 2.0 XML document only.
+          
+          Task:
+          From the following SOP (Standard Operating Procedure) for "Global Analytics", generate a valid, minimally complete BPMN 2.0 XML (<bpmn:definitions> ... </bpmn:definitions>) that models the process. The model must include at least:
+           - a single start event,
+           - the main tasks that reflect SOP steps (use clear readable task names),
+           - gateways where decisions are needed,
+           - an end event.
+          
+          Constraints:
+           - Output ONLY the BPMN XML (no explanation, no markdown, no surrounding text).
+          SOP:
+          ${text}
+          `;
+          };
+          
       // POST to our serverless function
-      const res = await axios.post("/api/openai", {
-        prompt
-      });
+      const res = await axios.post("/api/gemini", { prompt });
       if (res.data?.xml) {
         setBpmnXML(res.data.xml);
         setStatus("Got BPMN XML from OpenAI.");
