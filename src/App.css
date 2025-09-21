@@ -1,0 +1,25 @@
+.app-container {
+    padding: 20px;
+    font-family: Arial, sans-serif;
+    }
+    .bpmn-container {
+    border: 1px solid #ccc;
+    height: 500px;
+    margin-top: 20px;
+    }
+    .download-btn {
+    margin: 10px 0;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 5px;
+    background-color: #007bff;
+    color: white;
+    cursor: pointer;
+    }
+    .download-btn:hover {
+    background-color: #0056b3;
+    }
+    .error-text {
+    color: red;
+    margin-top: 10px;
+    }
