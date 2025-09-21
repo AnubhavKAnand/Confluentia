@@ -31,54 +31,50 @@ ${text}
 Important: output only the BPMN XML (no commentary).`;
   };
 
-  const callOpenAI = async () => {
+  // inside App.js - replace your existing callOpenAI implementation
+const callOpenAI = async () => {
     if (!sopText) {
       alert("Please upload a file first");
       return;
     }
-    setStatus("Sending to OpenAI...");
+    setStatus("Sending to Gemini endpoint...");
     try {
-        const buildPrompt = (text) => {
-            return `You are an expert BPMN process modeller and will output a valid BPMN 2.0 XML document only.
-          
-          Task:
-          From the following SOP (Standard Operating Procedure) for "Global Analytics", generate a valid, minimally complete BPMN 2.0 XML (<bpmn:definitions> ... </bpmn:definitions>) that models the process. The model must include at least:
-           - a single start event,
-           - the main tasks that reflect SOP steps (use clear readable task names),
-           - gateways where decisions are needed,
-           - an end event.
-          
-          Constraints:
-           - Output ONLY the BPMN XML (no explanation, no markdown, no surrounding text).
-          SOP:
-          ${text}
-          `;
-          };
-          
-      // POST to our serverless function
-      const res = await axios.post("/api/gemini", { prompt });
+      const prompt = buildPrompt(sopText);
+      // add a timeout so long-running requests are visible
+      const res = await axios.post("/api/gemini", { prompt }, { timeout: 120000 });
+      console.log("API response:", res.data);
       if (res.data?.xml) {
         setBpmnXML(res.data.xml);
-        setStatus("Got BPMN XML from OpenAI.");
-      } else if (res.data?.text) {
-        // try to extract xml from text
-        const payload = res.data.text;
-        // extract code block with xml or raw xml
-        const xmlMatch = payload.match(/```(?:xml)?\s*([\s\S]*?)```/i) || payload.match(/(<\?xml[\s\S]*<\/bpmn:definitions>)/i) || payload.match(/(<bpmn:definitions[\s\S]*<\/bpmn:definitions>)/i);
-        const xml = xmlMatch ? xmlMatch[1] : payload;
-        setBpmnXML(xml.trim());
-        setStatus("Got BPMN-like output from OpenAI (extracted).");
+        setStatus(`Got BPMN XML from backend (via ${res.data.backend || "unknown"})`);
+      } else if (res.data?.body) {
+        // fallback when body contains content but not xml extraction
+        const payload = JSON.stringify(res.data.body, null, 2);
+        setBpmnXML(payload);
+        setStatus("Received a response but no XML extraction — check the editor.");
       } else {
-        setStatus("OpenAI returned unexpected result. Check server logs.");
-        alert("OpenAI returned unexpected result. Check console.");
-        console.log(res.data);
+        setStatus("Backend responded but no usable payload. Check console and server logs.");
+        console.warn("Unexpected backend response:", res.data);
+        alert("Unexpected backend response. Open console for details.");
       }
     } catch (err) {
-      console.error("OpenAI call failed:", err);
-      setStatus("OpenAI request failed. Check console.");
-      alert("OpenAI request failed. See console.");
+      console.error("Backend call failed", err);
+      // Show as much useful info as possible:
+      const serverData = err?.response?.data;
+      const statusCode = err?.response?.status;
+      const errMessage = err?.message;
+  
+      // show in UI, but avoid leaking secrets
+      setStatus(`Request failed: ${statusCode || ""} ${errMessage || ""} — check console for details.`);
+  
+      // show a friendly alert and copy details to console
+      alert("Request to backend failed. See console for details.");
+      console.group("Backend error details");
+      console.log("axios error:", err);
+      if (serverData) console.log("server response data:", serverData);
+      console.groupEnd();
     }
   };
+  
 
   const onViewerReady = ({ success, error, viewer }) => {
     if (success) {
